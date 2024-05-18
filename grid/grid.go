@@ -41,7 +41,7 @@ func (g Grid) Neighbours(i int) ([]byte, error) {
 	}
 
 	for _, ni := range neigbourIndexs {
-		if ni[1] > 0 || ni[1] >= g.Height || ni[0] < 0 || ni[0] >= g.Width {
+		if ni[1] < 0 || ni[1] >= g.Height || ni[0] < 0 || ni[0] >= g.Width {
 			continue
 		}
 
