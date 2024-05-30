@@ -34,7 +34,11 @@ func main() {
 	grids = grid.Generate(curr)
 
 	for {
-		curr = <-grids
+		if curr = <-grids; curr == nil {
+			fmt.Println("an error occured generating grids")
+			return
+		}
+
 		print(curr)
 		time.Sleep(100 * time.Millisecond)
 	}

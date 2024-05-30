@@ -31,7 +31,7 @@ func (g Grid) Neighbours(i int) ([]byte, error) {
 		y = i / g.Width
 	)
 
-	// this stores the coordinates of the would be neighbours
+	// this stores the coordinates of the "would be" neighbours
 	// we can use this to check if they are out of bounds before
 	// calculating the index of the cell
 	neigbourIndexs := [][]int{
@@ -66,6 +66,8 @@ func (g Grid) Next() (*Grid, error) {
 			}
 		}
 
+		// Conways Game of Life Rules:
+
 		// 1. Any live cell with fewer than two live neighbors dies, as if by underpopulation.
 		// 3. Any live cell with more than three live neighbors dies, as if by overpopulation.
 		if alive < 2 || alive > 3 {
@@ -92,13 +94,24 @@ func (g Grid) Next() (*Grid, error) {
 
 func Generate(start *Grid) <-chan *Grid {
 	grids := make(chan *Grid)
+
 	go func(start *Grid, grids chan *Grid) {
-		curr := start
+		var (
+			curr *Grid
+			next *Grid
+			err  error
+		)
+
+		curr = start
+
 		for {
-			next, err := curr.Next()
-			if err != nil {
-				panic(err)
+			if next, err = curr.Next(); err != nil {
+				grids <- nil
+				//we cannot recover from this point
+				close(grids)
+				return
 			}
+
 			grids <- next
 			curr = next
 		}
