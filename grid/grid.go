@@ -10,8 +10,8 @@ type Grid struct {
 	Cells  []byte `json:"cells"`
 }
 
-func New(width int, height int) Grid {
-	return Grid{
+func New(width int, height int) *Grid {
+	return &Grid{
 		Width:  width,
 		Height: height,
 		Cells:  make([]byte, width*height),
@@ -49,4 +49,60 @@ func (g Grid) Neighbours(i int) ([]byte, error) {
 	}
 
 	return n, nil
+}
+
+func (g Grid) Next() (*Grid, error) {
+	next := New(g.Width, g.Height)
+	for i := range g.Cells {
+		n, err := g.Neighbours(i)
+		if err != nil {
+			return nil, err
+		}
+
+		alive := 0
+		for _, cell := range n {
+			if cell != 0 {
+				alive++
+			}
+		}
+
+		// 1. Any live cell with fewer than two live neighbors dies, as if by underpopulation.
+		// 3. Any live cell with more than three live neighbors dies, as if by overpopulation.
+		if alive < 2 || alive > 3 {
+			next.Cells[i] = 0
+			continue
+		}
+
+		// 2. Any live cell with two or three live neighbors lives on to the next generation.
+		if g.Cells[i] == 1 {
+			next.Cells[i] = 1
+			continue
+		}
+
+		// 4. Any dead cell with exactly three live neighbors becomes a live cell, as if by reproduction.
+		if alive == 3 {
+			next.Cells[i] = 1
+			continue
+		}
+
+	}
+
+	return next, nil
+}
+
+func Generate(start *Grid) <-chan *Grid {
+	grids := make(chan *Grid)
+	go func(start *Grid, grids chan *Grid) {
+		curr := start
+		for {
+			next, err := curr.Next()
+			if err != nil {
+				panic(err)
+			}
+			grids <- next
+			curr = next
+		}
+	}(start, grids)
+
+	return grids
 }
